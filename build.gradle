@@ -1,0 +1,17 @@
+apply plugin: 'java'
+
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
+dependencies {
+    implementation files('lib/logisim-generic-2.7.1.jar')
+}
+
+jar {
+    manifest {
+        attributes(
+            "Library-Class": "com.cbold.logi6522.Components" )
+    }
+}
