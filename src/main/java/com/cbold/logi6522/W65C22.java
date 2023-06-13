@@ -127,13 +127,6 @@ class W65C22 extends InstanceFactory {
         new PortLabel("CB2", Direction.WEST),
     };
 
-    private static enum TimerState {
-        IDLE,
-        ONE_SHOT,
-        FREE_ONE,
-        PULSE_COUNT
-    };
-
     private static final int PORT_RS   = 0;
     private static final int PORT_D    = 1;
     private static final int PORT_PHI2 = 2;
@@ -156,19 +149,19 @@ class W65C22 extends InstanceFactory {
     private Value cb1;
     private Value cb2;
 
-    private int ddra;
-    private int ddrb;
+    private byte ddra;
+    private byte ddrb;
 
-    private int pcr;
-    private int acr;
+    private byte pcr;
+    private byte acr;
 
-    private int t1l;
-    private int t1c;
-    private int t2l;
-    private int t2c;
+    private short t1l;
+    private short t1c;
+    private short t2l;
+    private short t2c;
 
-    private int ier;
-    private int ifr;
+    private byte ier;
+    private byte ifr;
 
     private boolean clkState = false;
 
@@ -222,19 +215,21 @@ class W65C22 extends InstanceFactory {
                 porta = Value.create(data.getAll());
                 break;
             case RS_DDRB:
-                ddrb = dataInt;
+                ddrb = (byte)dataInt;
                 break;
             case RS_DDRA:
-                ddra = dataInt;
+                ddra = (byte)dataInt;
                 break;
             case RS_T1CL:
             case RS_T1LL:
                 // $04 and $06 writes are identical ops
-                t1l = (t1l & 0xff00) | (dataInt & 0xff);
+                t1l &= 0xff00;
+                t1l |= (short)(dataInt & 0xff);
                 break;
             case RS_T1CH:
                 // Upper 8 bits of the latch is loaded
-                t1l = (t1l & 0xff00) | ((dataInt & 0xff) << 8);
+                t1l &= 0x00FF;
+                t1l |= ((dataInt & 0xff) << 8);
 
                 // RS $05 triggers the Counter to be loaded
                 t1c = t1l;
@@ -242,11 +237,13 @@ class W65C22 extends InstanceFactory {
                 // IFR6 is reset
                 ifr &= ~IFLAG_T1;
 
+                System.out.println("Arm T1");
                 t1active = true;
                 break;
             case RS_T1LH:
                 // Upper 8 bits of the latch is loaded
-                t1l = (t1l & 0xff00) | ((dataInt & 0xff) << 8);
+                t1l &= 0x00FF;
+                t1l |= ((dataInt & 0xff) << 8);
 
                 // IFR6 is reset
                 ifr &= ~IFLAG_T1;
@@ -254,11 +251,12 @@ class W65C22 extends InstanceFactory {
                 break;
             case RS_T2CL:
                 // Lower 8 bits are loaded into latch
-                t2l = (dataInt & 0xFF);
+                t2l = (short)(dataInt & 0xFF);
                 break;
             case RS_T2CH:
                 // Write upper 8 bits to counter and load lower 8 from latches
-                t2c = ((dataInt & 0xFF) << 8) | (t2l & 0xFF);
+                t2c = t2l;
+                t2c |= ((dataInt & 0xFF) << 8);
 
                 // IF5 is reset
                 ifr &= ~IFLAG_T2;
@@ -266,10 +264,10 @@ class W65C22 extends InstanceFactory {
                 t2active = true;
                 break;
             case RS_PCR:
-                pcr = dataInt;
+                pcr = (byte)dataInt;
                 break;
             case RS_ACR:
-                acr = dataInt;
+                acr = (byte)dataInt;
                 break;
             case RS_IER:
                 // Bit 7 determines whether other bits or set or cleared
@@ -286,16 +284,6 @@ class W65C22 extends InstanceFactory {
                 ifr &= ~(dataInt & 0x7F);
                 break;
         }
-    }
-
-    /**
-     * Advances the state of active timers
-     *
-     * @param clkEdge Specifies whether the trigger to process is from a positive clock edge (true)
-     *                or a pulse on PB6.
-     */
-    private void processTimers(boolean clkEdge) {
-
     }
 
     private void driveDataBus(InstanceState state) {
@@ -370,6 +358,45 @@ class W65C22 extends InstanceFactory {
         state.setPort(PORT_D, v, 1);
     }
 
+    private void updateTimers() {
+        if(t1c == -1) {
+            // Timer 1 is reloaded with latches after FFFF
+            t1c = t1l;
+        }
+        else {
+            --t1c;
+            System.out.println("T1C = " + t1c);
+        }
+
+        // Only update T2 if it is configured to run via PHI2
+        if((acr & ACR_T2_CTRL_MASK) == ACR_T2_CTRL_TIMED_INT) {
+            // T2 just continues counting after wrap around to FFFF
+            --t2c;
+        }
+    }
+
+    private void checkTimers() {
+        if(t1c == -1 && t1active) {
+            System.out.println("T1 Expire");
+            //TODO PB7
+
+            ifr |= IFLAG_T1;
+
+            if((acr & ACR_T1_CTRL_MASK) == ACR_T1_CTRL_TIMED_INT) {
+                // One-shot mode, so de-activate the timer
+                t1active = false;
+            }
+        }
+
+        if(t2c == -1 && t2active) {
+            ifr |= IFLAG_T2;
+            t2active = false;
+        }
+    }
+
+    private void processControls(InstanceState state) {
+    }
+
     @Override
     public void paintInstance(InstancePainter painter) {
         painter.drawRectangle(painter.getBounds(), "");
@@ -396,14 +423,19 @@ class W65C22 extends InstanceFactory {
 
         if(newClk != clkState) {
             if(!newClk) {
-                //Falling PHI2 edge
+                // Falling PHI2 edge
+                updateTimers();
+
                 if(selected && rwb == Value.FALSE) {
-                    //Write pulse selected
+                    // Write pulse selected
                     System.out.println("write detected");
                     Value data = state.getPort(PORT_D);
 
                     processRegWrite(rs.toIntValue(), data);
                 }
+            } else {
+                // Rising edge
+                checkTimers();
             }
 
             System.out.println("Edge detect");
@@ -411,6 +443,7 @@ class W65C22 extends InstanceFactory {
         }
 
         if(clkState && rwb == Value.TRUE && selected) {
+            driveDataBus(state);
         } else {
             state.setPort(PORT_D, Value.createUnknown(BitWidth.create(8)), 1);
         }
