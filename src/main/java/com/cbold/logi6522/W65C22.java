@@ -4,14 +4,10 @@ import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Value;
-import com.cburch.logisim.instance.InstanceFactory;
-import com.cburch.logisim.instance.InstancePainter;
-import com.cburch.logisim.instance.InstanceState;
-import com.cburch.logisim.instance.Port;
 
 
 @SuppressWarnings("unused")
-class W65C22 extends InstanceFactory {
+class W65C22 {
     private static final int RS_PORTB = 0x0;
     private static final int RS_PORTA = 0x1;
     private static final int RS_DDRB  = 0x2;
@@ -169,26 +165,6 @@ class W65C22 extends InstanceFactory {
     private boolean t2active;
 
     W65C22() {
-        super("W65C22 VIA");
-        setOffsetBounds(Bounds.create(-80, -80, 160, 160));
-        setPorts(new Port[] {
-            new Port(-80, -60, Port.INPUT,  4), //RS
-            new Port(-80, -40, Port.INOUT,  8), //D
-            new Port(-80, -20, Port.INPUT,  1), //PHI2
-            new Port(-80, 0,   Port.INPUT,  1), //RWB
-            new Port(-80, 20,  Port.INPUT,  1), //CS1
-            new Port(-80, 40,  Port.INPUT,  1), //CS2B
-            new Port(-80, 60,  Port.OUTPUT, 1), //IRQB
-
-            new Port(80, -50,   Port.INOUT, 8), //PA
-            new Port(80, -30,   Port.INOUT, 8), //PB
-            new Port(80, -10,   Port.INOUT, 1), //CA1
-            new Port(80, 10,   Port.INOUT, 1), //CA2
-            new Port(80, 30,   Port.INOUT, 1), //CB1
-            new Port(80, 50,   Port.INOUT, 1), //CB2
-
-        });
-
         BitWidth bits8 = BitWidth.create(8);
         porta = Value.createKnown(bits8, 0);
         portb = Value.createKnown(bits8, 0);
@@ -286,14 +262,12 @@ class W65C22 extends InstanceFactory {
         }
     }
 
-    private void driveDataBus(InstanceState state) {
+    private void driveDataBus(VIAState state) {
         Value v;
-        Value a_in = state.getPort(PORT_PA);
-        Value b_in = state.getPort(PORT_PB);
-        Value rs = state.getPort(PORT_RS);
+        Value a_in = state.portA;
+        Value b_in = state.portB;
 
-
-        switch(rs.toIntValue()) {
+        switch(state.rs) {
             case RS_PORTB:
                 v = mergeValues(portb, b_in, ddrb);
                 break;
@@ -355,7 +329,7 @@ class W65C22 extends InstanceFactory {
                 break;
         }
 
-        state.setPort(PORT_D, v, 1);
+        state.data = v;
     }
 
     private void updateTimers() {
@@ -394,44 +368,19 @@ class W65C22 extends InstanceFactory {
         }
     }
 
-    private void processControls(InstanceState state) {
-    }
-
-    @Override
-    public void paintInstance(InstancePainter painter) {
-        painter.drawRectangle(painter.getBounds(), "");
-
-        for(int i=0; i<labels.length; i++)
-        {
-            painter.drawPort(i, labels[i].label, labels[i].dir);
-        }
-
-    }
-
-    @Override
-    public void propagate(InstanceState state) {
-
-        Value rs = state.getPort(PORT_RS);
-        Value phi2 = state.getPort(PORT_PHI2);
-        Value rwb = state.getPort(PORT_RWB);
-        Value cs1 = state.getPort(PORT_CS1);
-        Value cs2b = state.getPort(PORT_CS2B);
-
-        boolean newClk = phi2 == Value.TRUE;
-
-        boolean selected = cs1 == Value.TRUE && cs2b == Value.FALSE;
+    void update(VIAState state) {
+        boolean newClk = state.clkState;
 
         if(newClk != clkState) {
             if(!newClk) {
                 // Falling PHI2 edge
                 updateTimers();
 
-                if(selected && rwb == Value.FALSE) {
+                if(state.selected && !state.read) {
                     // Write pulse selected
                     System.out.println("write detected");
-                    Value data = state.getPort(PORT_D);
 
-                    processRegWrite(rs.toIntValue(), data);
+                    processRegWrite(state.rs, state.data);
                 }
             } else {
                 // Rising edge
@@ -442,23 +391,22 @@ class W65C22 extends InstanceFactory {
             clkState = newClk;
         }
 
-        if(clkState && rwb == Value.TRUE && selected) {
+        if(clkState && state.read && state.selected) {
             driveDataBus(state);
         } else {
-            state.setPort(PORT_D, Value.createUnknown(BitWidth.create(8)), 1);
+            state.data = Value.createUnknown(BitWidth.create(8));
         }
 
         Value unknown = Value.createUnknown(BitWidth.create(8));
-        state.setPort(PORT_PA, mergeValues(porta, unknown, ddra), 1);
-        state.setPort(PORT_PB, mergeValues(portb, unknown, ddrb), 1);
-        state.setPort(PORT_CA1, ca1, 1);
-        state.setPort(PORT_CA2, ca2, 1);
-        state.setPort(PORT_CB1, cb1, 1);
-        state.setPort(PORT_CB2, cb2, 1);
 
-        boolean irq = (ifr & ier) != 0;
+        state.portA = mergeValues(porta, unknown, ddra);
+        state.portB = mergeValues(portb, unknown, ddrb);
+        state.CA1 = ca1;
+        state.CA2 = ca2;
+        state.CB1 = cb1;
+        state.CB2 = cb2;
 
-        state.setPort(PORT_IRQB, irq ? Value.FALSE : Value.TRUE, 1);
+        state.irq = (ifr & ier) != 0;
     }
 
     private Value mergeValues(Value a, Value b, int a_mask) {

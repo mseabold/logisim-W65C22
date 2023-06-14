@@ -11,7 +11,7 @@ public class Components extends Library {
 
     public Components() {
         tools = Arrays.asList(new AddTool[] {
-            new AddTool(new W65C22()),
+            new AddTool(new Simple65C22()),
         });
     }
 
