@@ -4,6 +4,7 @@ import com.cburch.logisim.data.BitWidth;
 import com.cburch.logisim.data.Bounds;
 import com.cburch.logisim.data.Direction;
 import com.cburch.logisim.data.Value;
+import com.cburch.logisim.instance.InstanceState;
 
 
 @SuppressWarnings("unused")
@@ -254,20 +255,20 @@ class W65C22 {
                     // Set operation
                     ier |= (dataInt & 0x7F);
                 }
+                System.out.println("IER: " + ier);
                 break;
             case RS_IFR:
                 // Writes to IFR clear any bits 0-6 which are 1 in the write
                 ifr &= ~(dataInt & 0x7F);
+                System.out.println("Clear IFRs: " + ifr);
                 break;
         }
     }
 
-    private void driveDataBus(VIAState state) {
+    private Value getDataBusVal(int rs, Value a_in, Value b_in) {
         Value v;
-        Value a_in = state.portA;
-        Value b_in = state.portB;
 
-        switch(state.rs) {
+        switch(rs) {
             case RS_PORTB:
                 v = mergeValues(portb, b_in, ddrb);
                 break;
@@ -329,7 +330,7 @@ class W65C22 {
                 break;
         }
 
-        state.data = v;
+        return v;
     }
 
     private void updateTimers() {
@@ -368,19 +369,22 @@ class W65C22 {
         }
     }
 
-    void update(VIAState state) {
-        boolean newClk = state.clkState;
+    void update(PortInterface iface, InstanceState instanceState) {
+        boolean newClk = iface.getClockState(instanceState);
+        boolean selected = iface.isSelected(instanceState);
+        boolean read = iface.isRead(instanceState);
+        Value data = iface.getData(instanceState);
 
         if(newClk != clkState) {
             if(!newClk) {
                 // Falling PHI2 edge
                 updateTimers();
 
-                if(state.selected && !state.read) {
+                if(selected && !read) {
                     // Write pulse selected
-                    System.out.println("write detected");
+                    System.out.println("write detected: " + data.toHexString());
 
-                    processRegWrite(state.rs, state.data);
+                    processRegWrite(iface.getRS(instanceState), data);
                 }
             } else {
                 // Rising edge
@@ -391,22 +395,20 @@ class W65C22 {
             clkState = newClk;
         }
 
-        if(clkState && state.read && state.selected) {
-            driveDataBus(state);
-        } else {
-            state.data = Value.createUnknown(BitWidth.create(8));
+        if(clkState && read && selected) {
+            Value dbus = getDataBusVal(iface.getRS(instanceState), iface.getPortA(instanceState), iface.getPortB(instanceState));
+
+            iface.setData(instanceState, dbus);
         }
 
         Value unknown = Value.createUnknown(BitWidth.create(8));
 
-        state.portA = mergeValues(porta, unknown, ddra);
-        state.portB = mergeValues(portb, unknown, ddrb);
-        state.CA1 = ca1;
-        state.CA2 = ca2;
-        state.CB1 = cb1;
-        state.CB2 = cb2;
+        iface.setPortA(instanceState, mergeValues(porta, unknown, ddra));
+        iface.setPortB(instanceState, mergeValues(portb, unknown, ddrb));
 
-        state.irq = (ifr & ier) != 0;
+        //TODO Control lines
+
+        iface.setIRQ(instanceState, ((ifr & ier) != 0) ? Value.FALSE : Value.TRUE);
     }
 
     private Value mergeValues(Value a, Value b, int a_mask) {

@@ -5,13 +5,26 @@ compileJava {
     targetCompatibility = '1.8'
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     implementation files('lib/logisim-generic-2.7.1.jar')
+    testImplementation(platform('org.junit:junit-bom:5.9.3'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
 }
 
 jar {
     manifest {
         attributes(
             "Library-Class": "com.cbold.logi6522.Components" )
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
     }
 }

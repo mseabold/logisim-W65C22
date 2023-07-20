@@ -9,7 +9,7 @@ import com.cburch.logisim.instance.InstancePainter;
 import com.cburch.logisim.instance.InstanceState;
 import com.cburch.logisim.instance.Port;
 
-public class Simple65C22 extends InstanceFactory {
+public class Simple65C22 extends InstanceFactory implements PortInterface {
     private static final class PortLabel {
         public Direction dir;
         public String label;
@@ -91,32 +91,111 @@ public class Simple65C22 extends InstanceFactory {
 
     @Override
     public void propagate(InstanceState state) {
-        VIAState coreState = new VIAState();
-
-        coreState.data = state.getPort(PORT_D);
-        coreState.portA = state.getPort(PORT_PA);
-        coreState.portB = state.getPort(PORT_PB);
-        coreState.CA1 = state.getPort(PORT_CA1);
-        coreState.CB1 = state.getPort(PORT_CB1);
-        coreState.CA1 = state.getPort(PORT_CA1);
-        coreState.CB2 = state.getPort(PORT_CB2);
-
-        coreState.rs = state.getPort(PORT_RS).toIntValue();
-
-        coreState.selected = (state.getPort(PORT_CS1) == Value.TRUE && state.getPort(PORT_CS2B) == Value.FALSE);
-        coreState.read = state.getPort(PORT_RWB) == Value.TRUE;
-        coreState.clkState = state.getPort(PORT_PHI2) == Value.TRUE;
-
-        core.update(coreState);
-
-        state.setPort(PORT_D, coreState.data, 1);
-        state.setPort(PORT_PA, coreState.portA, 1);
-        state.setPort(PORT_PB, coreState.portB, 1);
-        state.setPort(PORT_CA1, coreState.CA1, 1);
-        state.setPort(PORT_CB1, coreState.CB1, 1);
-        state.setPort(PORT_CA1, coreState.CA1, 1);
-        state.setPort(PORT_CB2, coreState.CB2, 1);
-
-        state.setPort(PORT_IRQB, coreState.irq ? Value.FALSE : Value.TRUE, 1);
+        core.update(this, state);
     }
+
+    @Override
+    public Value getData(InstanceState state) {
+        return state.getPort(PORT_D);
+    }
+
+    @Override
+    public Value getPortA(InstanceState state) {
+        return state.getPort(PORT_PA);
+    }
+
+    @Override
+    public Value getPortB(InstanceState state) {
+        return state.getPort(PORT_PB);
+    }
+
+    @Override
+    public Value getCA1(InstanceState state) {
+        return state.getPort(PORT_CA1);
+    }
+
+    @Override
+    public Value getCA2(InstanceState state) {
+        return state.getPort(PORT_CA2);
+    }
+
+    @Override
+    public Value getCB1(InstanceState state) {
+        return state.getPort(PORT_CB1);
+    }
+
+    @Override
+    public Value getCB2(InstanceState state) {
+        return state.getPort(PORT_CB2);
+    }
+
+    @Override
+    public int getRS(InstanceState state) {
+        return state.getPort(PORT_RS).toIntValue();
+    }
+
+    @Override
+    public boolean isSelected(InstanceState state) {
+        Value CS1 = state.getPort(PORT_CS1);
+        Value CS2B = state.getPort(PORT_CS2B);
+
+        return CS1 == Value.TRUE && CS2B == Value.FALSE;
+    }
+
+    @Override
+    public boolean getClockState(InstanceState state) {
+        return state.getPort(PORT_PHI2) == Value.TRUE;
+    }
+
+    @Override
+    public boolean isRead(InstanceState state) {
+        return state.getPort(PORT_RWB) == Value.TRUE;
+    }
+
+    @Override
+    public boolean isReset(InstanceState state) {
+        //TODO
+        return false;
+    }
+
+    @Override
+    public void setData(InstanceState state, Value value) {
+        state.setPort(PORT_D, value, 1);
+    }
+
+    @Override
+    public void setPortA(InstanceState state, Value value) {
+        state.setPort(PORT_PA, value, 1);
+    }
+
+    @Override
+    public void setPortB(InstanceState state, Value value) {
+        state.setPort(PORT_PB, value, 1);
+    }
+
+    @Override
+    public void setCA1(InstanceState state, Value value) {
+        state.setPort(PORT_CA1, value, 1);
+    }
+
+    @Override
+    public void setCA2(InstanceState state, Value value) {
+        state.setPort(PORT_CA2, value, 1);
+    }
+
+    @Override
+    public void setCB1(InstanceState state, Value value) {
+        state.setPort(PORT_CB1, value, 1);
+    }
+
+    @Override
+    public void setCB2(InstanceState state, Value value) {
+        state.setPort(PORT_CB2, value, 1);
+    }
+
+    @Override
+    public void setIRQ(InstanceState state, Value value) {
+        state.setPort(PORT_IRQB, value, 1);
+    }
+
 }
