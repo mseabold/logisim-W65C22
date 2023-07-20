@@ -9,93 +9,93 @@ import com.cburch.logisim.instance.InstanceState;
 
 @SuppressWarnings("unused")
 class W65C22 {
-    private static final int RS_PORTB = 0x0;
-    private static final int RS_PORTA = 0x1;
-    private static final int RS_DDRB  = 0x2;
-    private static final int RS_DDRA  = 0x3;
-    private static final int RS_T1CL  = 0x4;
-    private static final int RS_T1CH  = 0x5;
-    private static final int RS_T1LL  = 0x6;
-    private static final int RS_T1LH  = 0x7;
-    private static final int RS_T2CL  = 0x8;
-    private static final int RS_T2CH  = 0x9;
-    private static final int RS_SR    = 0xA;
-    private static final int RS_ACR   = 0xB;
-    private static final int RS_PCR   = 0xC;
-    private static final int RS_IFR   = 0xD;
-    private static final int RS_IER   = 0xE;
-    private static final int RS_ANOHS = 0xF;
+    static final int RS_PORTB = 0x0;
+    static final int RS_PORTA = 0x1;
+    static final int RS_DDRB  = 0x2;
+    static final int RS_DDRA  = 0x3;
+    static final int RS_T1CL  = 0x4;
+    static final int RS_T1CH  = 0x5;
+    static final int RS_T1LL  = 0x6;
+    static final int RS_T1LH  = 0x7;
+    static final int RS_T2CL  = 0x8;
+    static final int RS_T2CH  = 0x9;
+    static final int RS_SR    = 0xA;
+    static final int RS_ACR   = 0xB;
+    static final int RS_PCR   = 0xC;
+    static final int RS_IFR   = 0xD;
+    static final int RS_IER   = 0xE;
+    static final int RS_ANOHS = 0xF;
 
-    private static final int PCR_CA1_CTRL_MASK = 0x01;
-    private static final int PCR_CA2_CTRL_MASK = 0x0e;
-    private static final int PCR_CB1_CTRL_MASK = 0x10;
-    private static final int PCR_CB2_CTRL_MASK = 0xe0;
+    static final int PCR_CA1_CTRL_MASK = 0x01;
+    static final int PCR_CA2_CTRL_MASK = 0x0e;
+    static final int PCR_CB1_CTRL_MASK = 0x10;
+    static final int PCR_CB2_CTRL_MASK = 0xe0;
 
-    private static final int PCR_CA2_CTRL_SHIFT = 1;
-    private static final int PCR_CB1_CTRL_SHIFT = 4;
-    private static final int PCR_CB2_CTRL_SHIFT = 5;
+    static final int PCR_CA2_CTRL_SHIFT = 1;
+    static final int PCR_CB1_CTRL_SHIFT = 4;
+    static final int PCR_CB2_CTRL_SHIFT = 5;
 
-    private static final int PCR_CA1_CTRL_NEG  = 0x00;
-    private static final int PCR_CA1_CTRL_POS  = 0x01;
+    static final int PCR_CA1_CTRL_NEG  = 0x00;
+    static final int PCR_CA1_CTRL_POS  = 0x01;
 
-    private static final int PCR_CA2_CTRL_INT_NEG_EDGE     = 0x0 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_INT_NEG_EDGE_IND = 0x1 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_INT_POS_EDGE     = 0x2 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_INT_POS_EDGE_IND = 0x3 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_HANDSHAKE_OUT    = 0x4 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_PULSE_OUT        = 0x5 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_LOW_OUT          = 0x6 << PCR_CA2_CTRL_SHIFT;
-    private static final int PCR_CA2_CTRL_HIGH_OUT         = 0x7 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_INT_NEG_EDGE     = 0x0 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_INT_NEG_EDGE_IND = 0x1 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_INT_POS_EDGE     = 0x2 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_INT_POS_EDGE_IND = 0x3 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_HANDSHAKE_OUT    = 0x4 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_PULSE_OUT        = 0x5 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_LOW_OUT          = 0x6 << PCR_CA2_CTRL_SHIFT;
+    static final int PCR_CA2_CTRL_HIGH_OUT         = 0x7 << PCR_CA2_CTRL_SHIFT;
 
-    private static final int PCR_CB1_CTRL_NEG = 0x0 << PCR_CB1_CTRL_SHIFT;
-    private static final int PCR_CB1_CTRL_POS = 0x1 << PCR_CB1_CTRL_SHIFT;
+    static final int PCR_CB1_CTRL_NEG = 0x0 << PCR_CB1_CTRL_SHIFT;
+    static final int PCR_CB1_CTRL_POS = 0x1 << PCR_CB1_CTRL_SHIFT;
 
-    private static final int PCR_CB2_CTRL_INT_NEG_EDGE     = 0x0 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_INT_NEG_EDGE_IND = 0x1 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_INT_POS_EDGE     = 0x2 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_INT_POS_EDGE_IND = 0x3 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_HANDSHAKE_OUT    = 0x4 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_PULSE_OUT        = 0x5 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_LOW_OUT          = 0x6 << PCR_CB2_CTRL_SHIFT;
-    private static final int PCR_CB2_CTRL_HIGH_OUT         = 0x7 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_INT_NEG_EDGE     = 0x0 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_INT_NEG_EDGE_IND = 0x1 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_INT_POS_EDGE     = 0x2 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_INT_POS_EDGE_IND = 0x3 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_HANDSHAKE_OUT    = 0x4 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_PULSE_OUT        = 0x5 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_LOW_OUT          = 0x6 << PCR_CB2_CTRL_SHIFT;
+    static final int PCR_CB2_CTRL_HIGH_OUT         = 0x7 << PCR_CB2_CTRL_SHIFT;
 
-    private static final int ACR_LATCH_CTRL_MASK     = 0x03;
-    private static final int ACR_SHIFT_REG_CTRL_MASK = 0x1c;
-    private static final int ACR_T2_CTRL_MASK        = 0x20;
-    private static final int ACR_T1_CTRL_MASK        = 0xc0;
-    private static final int ACR_T1_TYPE_MASK        = 0x40;
-    private static final int ACR_T1_PB7_CRTL_MASK    = 0x80;
+    static final int ACR_LATCH_CTRL_MASK     = 0x03;
+    static final int ACR_SHIFT_REG_CTRL_MASK = 0x1c;
+    static final int ACR_T2_CTRL_MASK        = 0x20;
+    static final int ACR_T1_CTRL_MASK        = 0xc0;
+    static final int ACR_T1_TYPE_MASK        = 0x40;
+    static final int ACR_T1_PB7_CRTL_MASK    = 0x80;
 
-    private static final int ACR_SHIFT_REG_CTRL_SHIFT = 2;
-    private static final int ACR_T2_CTRL_SHIFT        = 5;
-    private static final int ACR_T1_CTRL_SHIFT        = 6;
-    private static final int ACR_T1_PB7_CTRL_SHIFT    = 7;
+    static final int ACR_SHIFT_REG_CTRL_SHIFT = 2;
+    static final int ACR_T2_CTRL_SHIFT        = 5;
+    static final int ACR_T1_CTRL_SHIFT        = 6;
+    static final int ACR_T1_PB7_CTRL_SHIFT    = 7;
 
-    private static final int ACR_SHIFT_REG_DISABLE  = 0x0 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_IN_T2    = 0x1 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_IN_PHI2  = 0x2 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_IN_EXT   = 0x3 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_OUT_FREE = 0x4 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_OUT_T2   = 0x5 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_OUT_PHI2 = 0x6 << ACR_SHIFT_REG_CTRL_SHIFT;
-    private static final int ACR_SHIFT_REG_OUT_EXT  = 0x7 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_DISABLE  = 0x0 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_IN_T2    = 0x1 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_IN_PHI2  = 0x2 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_IN_EXT   = 0x3 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_OUT_FREE = 0x4 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_OUT_T2   = 0x5 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_OUT_PHI2 = 0x6 << ACR_SHIFT_REG_CTRL_SHIFT;
+    static final int ACR_SHIFT_REG_OUT_EXT  = 0x7 << ACR_SHIFT_REG_CTRL_SHIFT;
 
-    private static final int ACR_T2_CTRL_TIMED_INT = 0x0 << ACR_T2_CTRL_SHIFT;
-    private static final int ACR_T2_CTRL_DOWN_PB6  = 0x1 << ACR_T2_CTRL_SHIFT;
+    static final int ACR_T2_CTRL_TIMED_INT = 0x0 << ACR_T2_CTRL_SHIFT;
+    static final int ACR_T2_CTRL_DOWN_PB6  = 0x1 << ACR_T2_CTRL_SHIFT;
 
-    private static final int ACR_T1_CTRL_TIMED_INT = 0x0 << ACR_T1_CTRL_SHIFT;
-    private static final int ACR_T1_CTRL_CONT_INT  = 0x1 << ACR_T1_CTRL_SHIFT;
+    static final int ACR_T1_CTRL_TIMED_INT = 0x0 << ACR_T1_CTRL_SHIFT;
+    static final int ACR_T1_CTRL_CONT_INT  = 0x1 << ACR_T1_CTRL_SHIFT;
 
-    private static final int ACR_T1_PB7_DISABLED   = 0x0 << ACR_T1_PB7_CTRL_SHIFT;
-    private static final int ACR_T1_PB7_ENABLED    = 0x1 << ACR_T1_PB7_CTRL_SHIFT;
+    static final int ACR_T1_PB7_DISABLED   = 0x0 << ACR_T1_PB7_CTRL_SHIFT;
+    static final int ACR_T1_PB7_ENABLED    = 0x1 << ACR_T1_PB7_CTRL_SHIFT;
 
-    private static final int IFLAG_CA2 = 0x01;
-    private static final int IFLAG_CA1 = 0x02;
-    private static final int IFLAG_SR = 0x04;
-    private static final int IFLAG_CB2 = 0x80;
-    private static final int IFLAG_CB1 = 0x10;
-    private static final int IFLAG_T2 = 0x20;
-    private static final int IFLAG_T1 = 0x40;
+    static final int IFLAG_CA2 = 0x01;
+    static final int IFLAG_CA1 = 0x02;
+    static final int IFLAG_SR = 0x04;
+    static final int IFLAG_CB2 = 0x80;
+    static final int IFLAG_CB1 = 0x10;
+    static final int IFLAG_T2 = 0x20;
+    static final int IFLAG_T1 = 0x40;
 
     private static final class PortLabel {
         public Direction dir;
@@ -165,6 +165,8 @@ class W65C22 {
     private boolean t1active;
     private boolean t2active;
 
+    private boolean pb7state;
+
     W65C22() {
         BitWidth bits8 = BitWidth.create(8);
         porta = Value.createKnown(bits8, 0);
@@ -179,6 +181,7 @@ class W65C22 {
 
         t1active = false;
         t2active = false;
+        pb7state = true;
     }
 
     private void processRegWrite(int port, Value data) {
@@ -216,6 +219,10 @@ class W65C22 {
 
                 System.out.println("Arm T1");
                 t1active = true;
+
+                // Starting T1 brings PB7 low
+                // TODO What happens during free-run mode if this is written? Always low? Toggle?
+                pb7state = false;
                 break;
             case RS_T1LH:
                 // Upper 8 bits of the latch is loaded
@@ -245,6 +252,7 @@ class W65C22 {
                 break;
             case RS_ACR:
                 acr = (byte)dataInt;
+
                 break;
             case RS_IER:
                 // Bit 7 determines whether other bits or set or cleared
@@ -353,9 +361,13 @@ class W65C22 {
     private void checkTimers() {
         if(t1c == -1 && t1active) {
             System.out.println("T1 Expire");
-            //TODO PB7
 
             ifr |= IFLAG_T1;
+
+            // Toggle PB7. For one shot, this just pulls it back high. For free-run, it creates the toggle
+            // TODO what happens in the case where free-run is *changed* to one-shot mid timer, and PB7 was high at the time?
+            //      Does it always return to high in that case? TBD based on HW tests
+            pb7state = !pb7state;
 
             if((acr & ACR_T1_CTRL_MASK) == ACR_T1_CTRL_TIMED_INT) {
                 // One-shot mode, so de-activate the timer
@@ -403,8 +415,15 @@ class W65C22 {
 
         Value unknown = Value.createUnknown(BitWidth.create(8));
 
+        Value portb_out = mergeValues(portb, unknown, ddrb);
+
+        if((acr & ACR_T1_PB7_ENABLED) != 0) {
+            // PB7 is driven internally by timer 1, so ignore ddrb
+            portb_out = portb_out.set(7, pb7state ? Value.TRUE : Value.FALSE);
+        }
+
         iface.setPortA(instanceState, mergeValues(porta, unknown, ddra));
-        iface.setPortB(instanceState, mergeValues(portb, unknown, ddrb));
+        iface.setPortB(instanceState, portb_out);
 
         //TODO Control lines
 

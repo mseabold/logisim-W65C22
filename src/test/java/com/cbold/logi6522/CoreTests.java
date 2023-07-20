@@ -340,4 +340,90 @@ class CoreTests {
         // Timer should now have expired
         assertEquals(testData.outIRQ, Value.FALSE);
     }
+
+    @Test
+    @DisplayName("T1 OneShot PB7")
+    void testT1OneShotPB7() {
+        // Start by making PB7 an input
+        writeRegister(W65C22.RS_DDRB, 0x00);
+
+        // Set PB7 control to T1
+        writeRegister(W65C22.RS_ACR, W65C22.ACR_T1_PB7_ENABLED);
+
+        // Check PB7 is now driven high
+        Value pb7 = testData.outB.get(7);
+
+        assertEquals(pb7, Value.TRUE);
+
+        // Perpare and and start the timer
+        writeRegister(W65C22.RS_PCR, 0);
+        writeRegister(W65C22.RS_T1CL, 5);
+        writeRegister(W65C22.RS_T1CH, 0);
+
+        // N + 2 cycles to expire the timer
+        for(int i = 0; i < 7; ++i) {
+            // PB7 should stay low
+            pb7 = testData.outB.get(7);
+            assertEquals(pb7, Value.FALSE);
+
+            tick();
+        }
+
+        // Timer should have expired and PB7 should be high
+        pb7 = testData.outB.get(7);
+        assertEquals(pb7, Value.TRUE);
+
+        // Make sure that changing DDRB and driving DATAB doesn't affect PB7
+        writeRegister(W65C22.RS_PORTB, 0x00);
+        writeRegister(W65C22.RS_DDRB, 0x80);
+
+        pb7 = testData.outB.get(7);
+        assertEquals(pb7, Value.TRUE);
+
+        // Turn off PB7 T1 control
+        writeRegister(W65C22.RS_ACR, 0);
+
+        // PB7 should be driven by PORTB register now
+        pb7 = testData.outB.get(7);
+        assertEquals(pb7, Value.FALSE);
+    }
+
+    @Test
+    @DisplayName("T1 Continuous PB7")
+    void testT1ContinuousPB7() {
+        writeRegister(W65C22.RS_PCR, 0);
+
+        // Setup ACR for FreeRun + PB7
+        writeRegister(W65C22.RS_ACR, W65C22.ACR_T1_CTRL_CONT_INT | W65C22.ACR_T1_PB7_ENABLED);
+
+        // PB7 should be high
+        Value pb7 = testData.outB.get(7);
+        assertEquals(pb7, Value.TRUE);
+
+        // Start T1
+        writeRegister(W65C22.RS_T1CL, 5);
+        writeRegister(W65C22.RS_T1CH, 0);
+
+        // Expire once
+        for(int i = 0; i < 7; ++i) {
+            // PB7 should be low
+            pb7 = testData.outB.get(7);
+            assertEquals(pb7, Value.FALSE);
+
+            tick();
+        }
+
+        // Expire again
+        for(int i = 0; i < 7; ++i) {
+            // PB7 should be high now
+            pb7 = testData.outB.get(7);
+            assertEquals(pb7, Value.TRUE);
+
+            tick();
+        }
+
+        // PB7 should have toggled again
+        pb7 = testData.outB.get(7);
+        assertEquals(pb7, Value.FALSE);
+    }
 }
