@@ -166,6 +166,7 @@ class W65C22 {
     private boolean t2active;
 
     private boolean pb7state;
+    private Value pb6in;
 
     W65C22() {
         BitWidth bits8 = BitWidth.create(8);
@@ -182,6 +183,7 @@ class W65C22 {
         t1active = false;
         t2active = false;
         pb7state = true;
+        pb6in = Value.createUnknown(BitWidth.create(1));
     }
 
     private void processRegWrite(int port, Value data) {
@@ -217,11 +219,11 @@ class W65C22 {
                 // IFR6 is reset
                 ifr &= ~IFLAG_T1;
 
-                System.out.println("Arm T1");
                 t1active = true;
 
                 // Starting T1 brings PB7 low
-                // TODO What happens during free-run mode if this is written? Always low? Toggle?
+                // Note: HW tests indicate that this always goes low on write, even during an active T1
+                //       free run while PB7 is currently high.
                 pb7state = false;
                 break;
             case RS_T1LH:
@@ -244,6 +246,7 @@ class W65C22 {
 
                 // IF5 is reset
                 ifr &= ~IFLAG_T2;
+
                 // Arm the timer
                 t2active = true;
                 break;
@@ -263,12 +266,10 @@ class W65C22 {
                     // Set operation
                     ier |= (dataInt & 0x7F);
                 }
-                System.out.println("IER: " + ier);
                 break;
             case RS_IFR:
                 // Writes to IFR clear any bits 0-6 which are 1 in the write
                 ifr &= ~(dataInt & 0x7F);
-                System.out.println("Clear IFRs: " + ifr);
                 break;
         }
     }
@@ -348,7 +349,6 @@ class W65C22 {
         }
         else {
             --t1c;
-            System.out.println("T1C = " + t1c);
         }
 
         // Only update T2 if it is configured to run via PHI2
@@ -360,13 +360,13 @@ class W65C22 {
 
     private void checkTimers() {
         if(t1c == -1 && t1active) {
-            System.out.println("T1 Expire");
 
             ifr |= IFLAG_T1;
 
             // Toggle PB7. For one shot, this just pulls it back high. For free-run, it creates the toggle
-            // TODO what happens in the case where free-run is *changed* to one-shot mid timer, and PB7 was high at the time?
-            //      Does it always return to high in that case? TBD based on HW tests
+            // Note: HW tests indicate that this *always* toggles on expiration. This means if SW changes mode
+            //       from free run to one shot while T1 is active and PB7 is high, it will go low and stay low
+            //       until a new one shot timer is started and expires
             pb7state = !pb7state;
 
             if((acr & ACR_T1_CTRL_MASK) == ACR_T1_CTRL_TIMED_INT) {
@@ -379,6 +379,27 @@ class W65C22 {
             ifr |= IFLAG_T2;
             t2active = false;
         }
+    }
+
+    private void checkPB6(Value pb6) {
+        if((acr & ACR_T2_CTRL_DOWN_PB6) != 0) {
+            if(pb6in.equals(Value.TRUE) && pb6.equals(Value.FALSE)) {
+                // Falling edge of PB6. Decrement t2c. If 0, set the iflag.
+                --t2c;
+
+                if(t2c == 0 && t2active) {
+                    ifr |= IFLAG_T2;
+                    t2active = false;
+                }
+            }
+
+            pb6in = pb6;
+        } else {
+            pb6in = Value.createUnknown(BitWidth.create(1));
+        }
+    }
+
+    private void processControlLines(PortInterface iface, InstanceState state) {
     }
 
     void update(PortInterface iface, InstanceState instanceState) {
@@ -394,7 +415,6 @@ class W65C22 {
 
                 if(selected && !read) {
                     // Write pulse selected
-                    System.out.println("write detected: " + data.toHexString());
 
                     processRegWrite(iface.getRS(instanceState), data);
                 }
@@ -403,9 +423,10 @@ class W65C22 {
                 checkTimers();
             }
 
-            System.out.println("Edge detect");
             clkState = newClk;
         }
+
+        checkPB6(iface.getPortB(instanceState).get(6));
 
         if(clkState && read && selected) {
             Value dbus = getDataBusVal(iface.getRS(instanceState), iface.getPortA(instanceState), iface.getPortB(instanceState));
@@ -420,6 +441,12 @@ class W65C22 {
         if((acr & ACR_T1_PB7_ENABLED) != 0) {
             // PB7 is driven internally by timer 1, so ignore ddrb
             portb_out = portb_out.set(7, pb7state ? Value.TRUE : Value.FALSE);
+        }
+
+        if((acr & ACR_T2_CTRL_DOWN_PB6) != 0) {
+            // T2 driven by PB6, so it should be input
+            // TODO Verify pin goes to input immediately when ACR is written regardless of DDRB
+            portb_out = portb_out.set(6, Value.createUnknown(BitWidth.create(1)));
         }
 
         iface.setPortA(instanceState, mergeValues(porta, unknown, ddra));

@@ -42,6 +42,9 @@ class CoreTests {
             selected = false;
             read = false;
             clk = false;
+
+            inA = Value.createUnknown(BitWidth.create(8));
+            inB = Value.createUnknown(BitWidth.create(8));
         }
 
         @Override
@@ -151,6 +154,10 @@ class CoreTests {
     CoreTests() {
         core =  new W65C22();
         testData = new TestData();
+    }
+
+    private void update() {
+        core.update(testData, null);
     }
 
     private void halfTick() {
@@ -425,5 +432,41 @@ class CoreTests {
         // PB7 should have toggled again
         pb7 = testData.outB.get(7);
         assertEquals(pb7, Value.FALSE);
+    }
+
+    @Test
+    @DisplayName("T2 PB6 Count")
+    void testT2PB6Count() {
+        writeRegister(W65C22.RS_PCR, 0);
+        testData.inB = testData.inB.set(6, Value.TRUE);
+
+        // Enable T2 IRQ
+        writeRegister(W65C22.RS_IER, 0x80 | W65C22.IFLAG_T2);
+
+        // Make PB6 output intially
+        writeRegister(W65C22.RS_DDRB, 0x40);
+        assertEquals(Value.FALSE, testData.outB.get(6));
+
+        // Set T2 Mode
+        writeRegister(W65C22.RS_ACR, W65C22.ACR_T2_CTRL_DOWN_PB6);
+
+        // PB6 should now be input/floating from the 6522 side
+        assertTrue(testData.outB.get(6).isUnknown());
+
+        // Start a timer
+        writeRegister(W65C22.RS_T2CL, 5);
+        writeRegister(W65C22.RS_T2CH, 0);
+
+        for(int i=0; i<4; ++i) {
+            testData.inB = testData.inB.set(6, Value.FALSE);
+            update();
+            assertEquals(testData.outIRQ, Value.TRUE);
+            testData.inB = testData.inB.set(6, Value.TRUE);
+            update();
+        }
+
+        testData.inB = testData.inB.set(6, Value.FALSE);
+        update();
+        assertEquals(testData.outIRQ, Value.FALSE);
     }
 }
